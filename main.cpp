@@ -176,35 +176,55 @@ Mat cat(const Mat &im1, const Mat &im2, const Mat &im3, const Mat &im4){
 }
 
 
-double filter(const Mat &im, int h, int w, int c){
+vector<vector<double>> laplace(){
+    vector<vector<double>> mask(3, vector<double>(3, 0));
+    mask[0][0] = -1;  mask[0][1] = -1; mask[0][2] = -1;
+    mask[1][0] = -1;  mask[1][1] = 8;  mask[1][2] = -1;
+    mask[2][0] = -1;  mask[2][1] = -1; mask[2][2] = -1;
+    return mask;
+}
+
+
+vector<vector<double>> sobelx(){
+    vector<vector<double>> mask(3, vector<double>(3, 0));
+    mask[0][0] = -1;  mask[0][1] = 0;   mask[0][2] = 1;
+    mask[1][0] = -2;  mask[1][1] = 0;   mask[1][2] = 2;
+    mask[2][0] = -1;  mask[2][1] = 0;   mask[2][2] = 1;
+    return mask;
+}
+
+
+vector<vector<double>> sobely(){
+    vector<vector<double>> mask(3, vector<double>(3, 0));
+    mask[0][0] = -1;  mask[0][1] = -2;   mask[0][2] = -1;
+    mask[1][0] = 0;  mask[1][1] = 0;   mask[1][2] = 0;
+    mask[2][0] = 1;  mask[2][1] = 2;   mask[2][2] = 1;
+    return mask;
+}
+
+
+double convolution(const Mat &im, const vector<vector<double>> &mask, int h, int w, int c){
     double result = 0;
-    for(int y = h-1; y <= h+1; y++){
-        for(int x = w-1; x <= w+1; x++){
-            if(x == w && y == h)
-                result += im.at<Vec3b>(y, x)[c] * 9;
-            else{
-                int u = x, v = y;
-                if(u < 0) u = 0;
-                else if(u >= im.cols) u = im.cols - 1;
-                if (v < 0) v = 0;
-                else if(v >= im.rows) v = im.rows - 1;
-                result += -im.at<Vec3b>(v, u)[c];
-            }
+    int H = mask.size() / 2, W = mask[0].size() / 2;
+
+    for(int y = -H; y <= H; y++){
+        for(int x = -W; x <= W; x++){
+            result += im.at<Vec3b>(h+y, w+x)[c] * mask[y+H][x+W];
         }
     }
     return result;
 }
 
 
-// laplace sharpness
-Mat sharp(const Mat &im){
-    Mat g(im.rows, im.cols, CV_8UC3, Scalar(0));
-    int H = g.rows, W = g.cols, C = g.channels();
+Mat filter(const Mat &im, const vector<vector<double>> &mask){
+    int H = im.rows, W = im.cols, C = im.channels();
+    int M = mask.size() / 2, N = mask[0].size() / 2;
+    Mat g(H, W, CV_8UC3, Scalar(0));
 
-    for (int h = 1; h < H-1; h++){
-        for (int w = 1; w < W-1; w++){
+    for(int h = M; h < H-M; h++){
+        for(int w = N; w < W-N; w++){
             for(int c = 0; c < C; c++){
-                g.at<Vec3b>(h, w)[c] = filter(im, h, w, c);
+                g.at<Vec3b>(h, w)[c] = S(convolution(im, mask, h, w, c) + 128);
             }
         }
     }
@@ -231,6 +251,21 @@ Mat zoom(const Mat &im, const double &h_scale, const double &w_scale){
 }
 
 
+Mat to_gray(const Mat &im){
+    Mat g(im.rows, im.cols, CV_8UC3, Scalar(0));
+    int H = g.rows, W = g.cols, C = g.channels();
+
+    for (int h = 0; h < H; h++){
+        for (int w = 0; w < W; w++){
+            for (int c = 0; c < C; c++){    // BGR model
+                g.at<Vec3b>(h, w)[c] = 0.1 * im.at<Vec3b>(h, w)[0] + 0.6 * im.at<Vec3b>(h, w)[1] + 0.3 * im.at<Vec3b>(h, w)[2];
+            }
+        }
+    }
+    return g;
+}
+
+
 int main()
 {
     // load HR image
@@ -253,11 +288,10 @@ int main()
     cout << "Load finished, " << "the number of images: " << ims.size()*ims[0].size() << endl;
 
     int H = ims[0][0].rows, W = ims[0][0].cols, C = ims[0][0].channels();
-    int frame = 60;
-    int wait = 10;
+    int frame = 70;
+    int wait = 5;
     int idx = 0;
     mkdir("./result");
-
 
     Mat im1 = cat(ims[0][0], ims[0][1], ims[0][2], ims[0][3]);
     Mat im2 = cat(ims[1][0], ims[1][1], ims[1][2], ims[1][3]);
@@ -345,9 +379,6 @@ int main()
         else
             imwrite("./result/image" + to_string(idx++) + ".jpeg", im3);
     }
-
-//    Mat g = rotation(ims[0][0], ims[1][0], 45, 0, 0);
-//    imshow("g", g);
 
     waitKey(0);
     return 0;
