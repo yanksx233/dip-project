@@ -111,9 +111,6 @@ Mat rotation(const Mat &im, const Mat &background, const double &angle, const in
     Mat g(H, W, CV_8UC3, Scalar(0));
     double radian = 3.1415927 * angle / 180.0;
 
-    cout << g.cols << g.rows << g.channels() << endl;
-    cout << background.cols << background.rows << background.channels() << endl;
-
     for (int h = 0; h < H; h++){
         for (int w = 0; w < W; w++){
             double u = (w-w0) * cos(-radian) + (h-h0) * sin(-radian) + w0;
@@ -236,134 +233,121 @@ Mat zoom(const Mat &im, const double &h_scale, const double &w_scale){
 
 int main()
 {
-    // load lr image
-//    vector<string> scene = {"City_lr", "Forest_lr", "Snow mountain_lr"};
-//    string dir = "./Landscapes/LR/";
-//    Mat sub1_im1 = imread(dir + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-//    Mat sub1_im1_ = imread(dir + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-//    Mat sub1_im2 = imread(dir + scene[0] + to_string(2) + ".jpeg", IMREAD_COLOR);
-//    Mat sub1_im3 = imread(dir + scene[0] + to_string(3) + ".jpeg", IMREAD_COLOR);
-//    Mat sub1_im4 = imread(dir + scene[0] + to_string(4) + ".jpeg", IMREAD_COLOR);
-//    Mat sub2_im1 = imread(dir + scene[1] + to_string(1) + ".jpeg", IMREAD_COLOR);
-//    Mat sub2_im2 = imread(dir + scene[1] + to_string(2) + ".jpeg", IMREAD_COLOR);
-//    Mat sub2_im3 = imread(dir + scene[1] + to_string(3) + ".jpeg", IMREAD_COLOR);
-//    Mat sub2_im4 = imread(dir + scene[1] + to_string(4) + ".jpeg", IMREAD_COLOR);
-//    Mat sub3_im1 = imread(dir + scene[2] + to_string(1) + ".jpeg", IMREAD_COLOR);
-//    Mat sub3_im2 = imread(dir + scene[2] + to_string(2) + ".jpeg", IMREAD_COLOR);
-//    Mat sub3_im3 = imread(dir + scene[2] + to_string(3) + ".jpeg", IMREAD_COLOR);
-//    Mat sub3_im4 = imread(dir + scene[2] + to_string(4) + ".jpeg", IMREAD_COLOR);
-
-    // TODO: 问题在于图片没读进来
     // load HR image
-    vector<string> scene = {"City", "Forest", "Snow mountain"};
-    string dir = "./Landscapes/";
-    Mat sub1_im1 = imread(dir + scene[0] + "/" + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-//    Mat sub1_im1_ = imread(dir + scene[0] + "/" + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-    Mat sub1_im2 = imread(dir + scene[0] + "/" + scene[0] + to_string(2) + ".jpeg", IMREAD_COLOR);
-    Mat sub1_im3 = imread(dir + scene[0] + "/" + scene[0] + to_string(3) + ".jpeg", IMREAD_COLOR);
-    Mat sub1_im4 = imread(dir + scene[0] + "/" + scene[0] + to_string(4) + ".jpeg", IMREAD_COLOR);
-    Mat sub2_im1 = imread(dir + scene[1] + "/" + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-    Mat sub2_im2 = imread(dir + scene[1] + "/" + scene[0] + to_string(2) + ".jpeg", IMREAD_COLOR);
-    Mat sub2_im3 = imread(dir + scene[1] + "/" + scene[0] + to_string(3) + ".jpeg", IMREAD_COLOR);
-    Mat sub2_im4 = imread(dir + scene[1] + "/" + scene[0] + to_string(4) + ".jpeg", IMREAD_COLOR);
-    Mat sub3_im1 = imread(dir + scene[2] + "/" + scene[0] + to_string(1) + ".jpeg", IMREAD_COLOR);
-    Mat sub3_im2 = imread(dir + scene[2] + "/" + scene[0] + to_string(2) + ".jpeg", IMREAD_COLOR);
-    Mat sub3_im3 = imread(dir + scene[2] + "/" + scene[0] + to_string(3) + ".jpeg", IMREAD_COLOR);
-    Mat sub3_im4 = imread(dir + scene[2] + "/" + scene[0] + to_string(4) + ".jpeg", IMREAD_COLOR);
+    vector<vector<Mat>> ims;
+    vector<string> scenes = {"City", "Forest", "Snow mountain"};
+    for(const auto &scene : scenes){
+        vector<Mat> each_scene;
+        string dir = "./Landscapes/" + scene;
+        for(int j = 1; j < 5; j++){
+            string filename = dir + "/" + scene + to_string(j) + ".jpeg";
+            Mat temp = imread(filename, IMREAD_COLOR);
+            if(temp.data == nullptr){
+                cout << "Error: invalid path: " + filename << endl;
+                raise(-1);
+            }
+            each_scene.push_back(temp);
+        }
+        ims.push_back(each_scene);
+    }
+    cout << "Load finished, " << "the number of images: " << ims.size()*ims[0].size() << endl;
 
+    int H = ims[0][0].rows, W = ims[0][0].cols, C = ims[0][0].channels();
     int frame = 60;
     int wait = 10;
     int idx = 0;
     mkdir("./result");
 
-//    cout << sub1_im1.cols << endl;  // TODO
-//    Mat im1(sub1_im2.rows * 2, sub1_im2.cols * 2, CV_8UC3, Scalar(0));
-//    for (int f = 0; f <= frame; f++){
-//        double a = 90.0 * f / double(frame);
-//        Mat g1 = rotation(sub1_im1, sub2_im1, a, 0, 0);
-//        Mat g2 = rotation(sub1_im2, sub2_im2, -a, sub1_im1.cols, 0);
-//        Mat g3 = rotation(sub1_im3, sub2_im3, -a, 0, sub1_im1.rows);
-//        Mat g4 = rotation(sub1_im4, sub2_im4, a, sub1_im1.cols, sub1_im1.rows);
-//        im1 = cat(g1, g2, g3, g4);
-//        if (f == 0 || f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im1);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im1);
-//    }
-//
-//    Mat im2(sub2_im1.rows * 2, sub2_im1.cols * 2, CV_8UC3, Scalar(0));
-//    int R = sqrt(sub2_im1.cols*sub2_im1.cols + sub2_im1.rows*sub2_im1.rows);
-//    for (int f = 0; f <= frame; f++){
-//        double r = R * f / double(frame);
-//        Mat g1 = cycle(sub2_im1, sub3_im1, r, sub2_im1.cols, sub2_im1.rows);
-//        Mat g2 = cycle(sub2_im2, sub3_im2, r, 0, sub2_im1.rows);
-//        Mat g3 = cycle(sub2_im3, sub3_im3, r, sub2_im1.cols, 0);
-//        Mat g4 = cycle(sub2_im4, sub3_im4, r, 0, 0);
-//        im2 = cat(g1, g2, g3, g4);
-//        if (f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
-//    }
-//
-//    Mat im3 = cat(sub1_im1, sub1_im2, sub1_im3, sub1_im4);
-//    for (int f = 0; f <= frame; f++){
-//        double u = f / double(frame);
-//        Mat im3_mix = mix(im2, im3, u);
-//        if (f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im3_mix);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im3_mix);
-//    }
-//
-//    Mat im4 = cat(sub2_im1, sub2_im2, sub2_im3, sub2_im4);
-//    for (int f = 0; f <= frame; f++){
-//        int up = im4.rows * f / double(frame);
-//        int down = im4.rows - up;
-//        Mat im4_mix = add(translation_u(im3, up), translation_u(im4, -down));
-//        if (f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im4_mix);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im4_mix);
-//    }
-//
-//    Mat im5(sub3_im1.rows * 2, sub3_im1.cols * 2, CV_8UC3, Scalar(0));
-//    for (int f = 0; f <= frame; f++){
-//        int up = sub2_im1.rows * f / double(frame);
-//        int down = sub2_im1.rows - up;
-//        Mat g1 = add(translation_u(sub2_im1, up), translation_u(sub3_im1, -down));
-//        Mat g2 = add(translation_u(sub2_im2, up), translation_u(sub3_im2, -down));
-//        Mat g3 = add(translation_u(sub2_im3, -up), translation_u(sub3_im3, down));
-//        Mat g4 = add(translation_u(sub2_im4, -up), translation_u(sub3_im4, down));
-//        im5 = cat(g1, g2, g3, g4);
-//        if (f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im5);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im5);
-//    }
-//
-//    Mat im6(sub1_im1.rows * 2, sub1_im1.cols * 2, CV_8UC3, Scalar(0));
-//    for (int f = 0; f <= frame; f++){
-//        double scale = 1 + f / double(frame);
-//        Mat g1 = zoom(sub3_im1, scale, scale);
-//        Mat g2 = zoom(sub3_im2, scale, 2 - scale);
-//        Mat g3 = zoom(sub3_im3, 2 - scale, scale);
-//        Mat g4 = zoom(sub3_im4, 2 - scale,  2 - scale);
-//        im6 = cat(g1, g2, g3, g4);
-//        if (f == frame)
-//            for (int i = 0; i <= wait; i++)
-//                imwrite("./result/image" + to_string(idx++) + ".jpeg", im6);
-//        else
-//            imwrite("./result/image" + to_string(idx++) + ".jpeg", im6);
-//    }
 
-    Mat g = rotation(sub1_im1, sub2_im2, 45, 0, 0);
-    imshow("g", g);
+    Mat im1 = cat(ims[0][0], ims[0][1], ims[0][2], ims[0][3]);
+    Mat im2 = cat(ims[1][0], ims[1][1], ims[1][2], ims[1][3]);
+    for (int f = 0; f <= frame; f++){
+        double u = f / double(frame);
+        Mat im1_mix = mix(im1, im2, u);
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im1_mix);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im1_mix);
+    }
+
+
+    int R = sqrt(W*W + H*H);
+    for (int f = 0; f <= frame; f++){
+        double r = R * f / double(frame);
+        Mat g1 = cycle(ims[1][0], ims[2][0], r, W, H);
+        Mat g2 = cycle(ims[1][1], ims[2][1], r, 0, H);
+        Mat g3 = cycle(ims[1][2], ims[2][2], r, W, 0);
+        Mat g4 = cycle(ims[1][3], ims[2][3], r, 0, 0);
+        im2 = cat(g1, g2, g3, g4);
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
+    }
+
+
+    for (int f = 0; f <= frame; f++){
+        double a = 90.0 * f / double(frame);
+        Mat g1 = rotation(ims[2][0], ims[0][0], a, 0, 0);
+        Mat g2 = rotation(ims[2][1], ims[0][1], -a, W, 0);
+        Mat g3 = rotation(ims[2][2], ims[0][2], -a, 0, H);
+        Mat g4 = rotation(ims[2][3], ims[0][3], a, W, H);
+        im2 = cat(g1, g2, g3, g4);
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im2);
+    }
+
+
+    Mat im3 = cat(ims[1][0], ims[1][1], ims[1][2], ims[1][3]);
+    for (int f = 0; f <= frame; f++){
+        int up = im3.rows * f / double(frame);
+        int down = im3.rows - up;
+        Mat im_mix = add(translation_u(im2, up), translation_u(im3, -down));
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im_mix);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im_mix);
+    }
+
+
+    for (int f = 0; f <= frame; f++){
+        int up = H * f / double(frame);
+        int down = H - up;
+        Mat g1 = add(translation_u(ims[1][0], up), translation_u(ims[2][0], -down));
+        Mat g2 = add(translation_u(ims[1][1], up), translation_u(ims[2][1], -down));
+        Mat g3 = add(translation_u(ims[1][2], -up), translation_u(ims[2][2], down));
+        Mat g4 = add(translation_u(ims[1][3], -up), translation_u(ims[2][3], down));
+        im3 = cat(g1, g2, g3, g4);
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im3);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im3);
+    }
+
+
+    for (int f = 0; f <= frame; f++){
+        double scale = 1 + f / double(frame);
+        Mat g1 = zoom(ims[2][0], scale, scale);
+        Mat g2 = zoom(ims[2][1], scale, 2 - scale);
+        Mat g3 = zoom(ims[2][2], 2 - scale, scale);
+        Mat g4 = zoom(ims[2][3], 2 - scale,  2 - scale);
+        im3 = cat(g1, g2, g3, g4);
+        if (f == frame)
+            for (int i = 0; i <= wait; i++)
+                imwrite("./result/image" + to_string(idx++) + ".jpeg", im3);
+        else
+            imwrite("./result/image" + to_string(idx++) + ".jpeg", im3);
+    }
+
+//    Mat g = rotation(ims[0][0], ims[1][0], 45, 0, 0);
+//    imshow("g", g);
 
     waitKey(0);
     return 0;
